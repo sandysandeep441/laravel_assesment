@@ -32,7 +32,7 @@ class ProcessOrganizationOnboardingTest extends TestCase
             'processed_at' => now(),
         ]);
 
-        $job = new ProcessOrganizationOnboarding($organization);
+        $job = new ProcessOrganizationOnboarding($organization->id);
         
         // Execute the job
         $job->handle();
@@ -65,7 +65,7 @@ class ProcessOrganizationOnboardingTest extends TestCase
             'failed_reason' => 'Previous failure',
         ]);
 
-        $job = new ProcessOrganizationOnboarding($organization);
+        $job = new ProcessOrganizationOnboarding($organization->id);
         
         // Execute the job
         $job->handle();
@@ -97,7 +97,7 @@ class ProcessOrganizationOnboardingTest extends TestCase
             'batch_id' => $batch->id,
         ]);
 
-        $job = new ProcessOrganizationOnboarding($organization);
+        $job = new ProcessOrganizationOnboarding($organization->id);
         
         // Execute the job
         $job->handle();
@@ -129,7 +129,7 @@ class ProcessOrganizationOnboardingTest extends TestCase
             'batch_id' => $batch->id,
         ]);
 
-        $job = new ProcessOrganizationOnboarding($organization);
+        $job = new ProcessOrganizationOnboarding($organization->id);
         
         // Execute the job
         $job->handle();
@@ -165,7 +165,7 @@ class ProcessOrganizationOnboardingTest extends TestCase
 
         // Mock the performOnboarding method to throw an exception
         $job = $this->getMockBuilder(ProcessOrganizationOnboarding::class)
-            ->setConstructorArgs([$organization])
+            ->setConstructorArgs([$organization->id])
             ->onlyMethods(['performOnboarding'])
             ->getMock();
             
@@ -197,7 +197,7 @@ class ProcessOrganizationOnboardingTest extends TestCase
             'status' => 'pending',
         ]);
 
-        $job = new ProcessOrganizationOnboarding($organization);
+        $job = new ProcessOrganizationOnboarding($organization->id);
         
         $uniqueId = $job->uniqueId();
         
@@ -214,7 +214,7 @@ class ProcessOrganizationOnboardingTest extends TestCase
             'status' => 'completed',
         ]);
 
-        $job = new ProcessOrganizationOnboarding($organization);
+        $job = new ProcessOrganizationOnboarding($organization->id);
         
         // Expect log message for skipping
         Log::shouldReceive('info')
@@ -233,7 +233,7 @@ class ProcessOrganizationOnboardingTest extends TestCase
             'contact_email' => 'contact@test.com',
             'status' => 'pending',
         ]);
-        $job = new ProcessOrganizationOnboarding($organization);
+        $job = new ProcessOrganizationOnboarding($organization->id);
         
         // Execute the job
         $job->handle();
@@ -251,7 +251,7 @@ class ProcessOrganizationOnboardingTest extends TestCase
             'status' => 'pending',
         ]);
 
-        $job = new ProcessOrganizationOnboarding($organization);
+        $job = new ProcessOrganizationOnboarding($organization->id);
         
         $exception = new \Exception('Final failure after retries');
         

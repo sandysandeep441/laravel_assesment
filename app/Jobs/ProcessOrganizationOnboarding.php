@@ -42,18 +42,20 @@ class ProcessOrganizationOnboarding implements ShouldQueue
      */
     public string $uniqueId;
 
+    protected int $organizationId;
+
     protected Organization $organization;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(Organization $organization)
+    public function __construct(int $organizationId)
     {
-        $this->organization = $organization;
-        $this->uniqueId = "org_onboarding_{$organization->id}";
+        $this->organizationId = $organizationId;
+        $this->uniqueId = "org_onboarding_{$organizationId}";
         
         // Ensure job is unique per organization
-        $this->onConnection('redis')->onQueue('organization-onboarding');
+        $this->onQueue('organization-onboarding');
     }
 
     /**
@@ -69,6 +71,7 @@ class ProcessOrganizationOnboarding implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->organization = Organization::findOrFail($this->organizationId);
         // Idempotency check: Refresh the organization to get latest state
         $this->organization->refresh();
         
@@ -133,6 +136,7 @@ class ProcessOrganizationOnboarding implements ShouldQueue
      */
     public function failed(Exception $exception): void
     {
+        $this->organization = Organization::find($this->organizationId) ?? new Organization(['id' => $this->organizationId]);
         // Mark as permanently failed after all retries exhausted
         $this->updateOrganizationStatus('failed', failed_reason: 
             "Job failed after {$this->tries} attempts: " . $exception->getMessage()
@@ -154,7 +158,6 @@ class ProcessOrganizationOnboarding implements ShouldQueue
     protected function performOnboarding(): void
     {
         // Simulate processing time - replace with actual business logic
-        sleep(1);
         
         // Add your actual onboarding logic here:
         // - Send welcome emails
@@ -164,11 +167,7 @@ class ProcessOrganizationOnboarding implements ShouldQueue
         // etc.
         
         // For demonstration, we'll just simulate success
-        if (rand(1, 10) <= 8) { // 80% success rate for demo
-            // Success
-        } else {
-            throw new Exception('Simulated onboarding failure');
-        }
+        return;
     }
 
     /**

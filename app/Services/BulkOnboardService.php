@@ -44,19 +44,20 @@ class BulkOnboardService
             // Bulk insert organizations
             $insertedCount = $this->organizationRepository->bulkInsertOrganizations($organizationsData);
 
-            // Get inserted organizations and dispatch jobs
-            $organizationsToProcess = $this->organizationRepository->getOrganizationsByBatch($batch->id);
-            
-            foreach ($organizationsToProcess as $organization) {
-                ProcessOrganizationOnboarding::dispatch($organization);
-                
-                Log::info('Organization onboarding job dispatched', [
-                    'batch_id' => $batch->id,
-                    'organization_id' => $organization->id,
-                    'domain' => $organization->domain,
-                    'status' => 'job_dispatched'
-                ]);
+            // Dispatch jobs by ID to keep request path lightweight
+            $organizationIdsToProcess = DB::table('organizations')
+                ->where('batch_id', $batch->id)
+                ->pluck('id');
+
+            foreach ($organizationIdsToProcess as $organizationId) {
+                ProcessOrganizationOnboarding::dispatch((int) $organizationId);
             }
+
+            Log::info('Organization onboarding jobs dispatched', [
+                'batch_id' => $batch->id,
+                'total_jobs' => $organizationIdsToProcess->count(),
+                'status' => 'jobs_dispatched'
+            ]);
 
             DB::commit();
 
@@ -69,7 +70,7 @@ class BulkOnboardService
 
             return [
                 'batch_id' => $batch->id,
-                'total_organizations' => $organizationsToProcess->count(),
+                'total_organizations' => $organizationIdsToProcess->count(),
                 'status' => 'processing'
             ];
 
