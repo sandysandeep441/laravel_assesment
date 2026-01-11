@@ -9,7 +9,7 @@ This application provides a scalable solution for bulk onboarding organizations 
 ## ✨ Features
 
 - **High-Performance API**: Handles up to 1000 organizations per request
-- **Background Job Processing**: Asynchronous processing with Redis queues
+- **Background Job Processing**: Asynchronous processing with Laravel queues (Redis optional)
 - **Idempotent Operations**: Prevents duplicate processing and ensures consistency
 - **Retry & Backoff**: Automatic retry mechanism with exponential backoff
 - **Comprehensive Testing**: Feature and unit tests with 80%+ coverage
@@ -21,7 +21,7 @@ This application provides a scalable solution for bulk onboarding organizations 
 
 - PHP 8.2+
 - MySQL 8.0+ or PostgreSQL 12+
-- Redis 7+
+- Redis 7+ (optional, recommended for production queues)
 - Composer 2.0+
 - Laravel 12
 
@@ -42,9 +42,6 @@ php artisan key:generate
 # Database setup
 php artisan migrate
 
-# Start Redis server
-redis-server
-
 # Start queue worker
 php artisan queue:work --queue=organization-onboarding
 
@@ -61,12 +58,15 @@ php artisan serve
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=laravel_bulk_onboarding
+DB_DATABASE=laravel_assesment
 DB_USERNAME=root
 DB_PASSWORD=
 
-# Redis Queue
-QUEUE_CONNECTION=redis
+# Queue
+# Use `database` for a simple setup, or `redis` for higher throughput.
+QUEUE_CONNECTION=database
+
+# Redis (optional)
 REDIS_HOST=127.0.0.1
 REDIS_PASSWORD=null
 REDIS_PORT=6379
@@ -210,9 +210,6 @@ php artisan test --testsuite=Feature
 # Run unit tests
 php artisan test --testsuite=Unit
 
-# Run with coverage
-php artisan test --coverage
-
 # Run specific test
 php artisan test tests/Feature/BulkOnboardApiTest.php
 ```
@@ -239,7 +236,7 @@ php artisan test tests/Feature/BulkOnboardApiTest.php
 ### Throughput Optimization
 
 - **Bulk Inserts**: Chunked inserts (500 records per chunk)
-- **Queue Processing**: Redis-based job queues
+- **Queue Processing**: Queue-backed job processing (Redis recommended in production)
 - **Database Indexing**: Optimized indexes on domain and batch_id
 - **Connection Pooling**: Efficient database connections
 
@@ -370,7 +367,7 @@ APP_DEBUG=true
 1. **High Throughput Requirement**: System designed for 10 requests/second sustained load
 2. **Reliable Network**: Stable connection between API and queue systems
 3. **Database Performance**: MySQL/PostgreSQL can handle the expected load
-4. **Redis Availability**: Redis queue system is highly available
+4. **Queue Backend Availability**: Queue backend (database/redis) is highly available
 5. **Email Delivery**: External email services are reliable for notifications
 
 ### Trade-offs

@@ -259,8 +259,6 @@ class ProcessOrganizationOnboardingTest extends TestCase
         
         // Verify organization is marked as permanently failed
         $organization->refresh();
-        error_log($organization);
-        error_log($organization->failed_reason);
         $this->assertEquals('failed', $organization?->status);
         $this->assertStringContainsString('Job failed after 3 attempts', $organization->failed_reason);
     }

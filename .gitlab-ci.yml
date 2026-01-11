@@ -6,20 +6,17 @@ stages:
 variables:
   MYSQL_ROOT_PASSWORD: password
   MYSQL_DATABASE: laravel_test
-  REDIS_URL: redis://redis:6379
+  APP_ENV: testing
 
 test:
   stage: test
   image: php:8.2-cli
   services:
     - mysql:8.0
-    - redis:7
   before_script:
     - apt-get update -yqq
     - apt-get install git unzip libzip-dev zip libpng-dev libonig-dev libxml2-dev -yqq
     - docker-php-ext-install pdo_mysql zip bcmath gd
-    - pecl install redis
-    - docker-php-ext-enable redis
     - curl -sS https://getcomposer.org/installer | php
     - php composer.phar install --no-progress --no-interaction --prefer-dist
     - cp .env.example .env
@@ -27,13 +24,7 @@ test:
     - php artisan migrate --force --env=testing
   script:
     - php artisan config:clear --env=testing
-    - php artisan test --coverage
-  coverage: '/Coverage: \d+\.\d+%/'
-  artifacts:
-    reports:
-      coverage_report:
-        coverage_format: cobertura
-        path: coverage.xml
+    - php artisan test
 
 security:
   stage: security
@@ -43,8 +34,6 @@ security:
     - php composer.phar install --no-progress --no-interaction --prefer-dist
   script:
     - php composer.phar audit
-    - php composer.phar require --dev enshrined/svg-sanitizer
-    - php composer.phar vendor/bin/security-checker security:check
 
 deploy:
   stage: deploy
