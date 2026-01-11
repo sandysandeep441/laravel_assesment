@@ -1,15 +1,17 @@
 stages:
-  - test
-  - security
-  - deploy
+  - build
+  - scan
+  - deploy-development
+  - deploy-staging
+  - deploy-production
 
 variables:
   MYSQL_ROOT_PASSWORD: password
   MYSQL_DATABASE: laravel_test
   APP_ENV: testing
 
-test:
-  stage: test
+build:
+  stage: build
   image: php:8.2-cli
   services:
     - mysql:8.0
@@ -25,9 +27,36 @@ test:
   script:
     - php artisan config:clear --env=testing
     - php artisan test
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "assessments"'
+    - if: '$CI_COMMIT_REF_NAME == "main"'
+push:
+  stage: build
+  image: alpine:latest
+  script:
+    - echo "Pushing image to ECR"
+  needs:
+    - build
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "assessments"'
+    - if: '$CI_COMMIT_REF_NAME == "main"'
+
+# Checkmarx Scan (CxOne)
+checkmarx-scan:
+  stage: scan
+  image:
+    name: ""
+  script:
+    - echo "Checkmarx Scan"
+  tags:
+    - dev-us-inv-non-pci-linux
+  allow_failure: true  
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "assessments"'
+    - if: '$CI_COMMIT_REF_NAME == "main"'
 
 security:
-  stage: security
+  stage: scan
   image: php:8.2-cli
   before_script:
     - curl -sS https://getcomposer.org/installer | php
@@ -35,11 +64,33 @@ security:
   script:
     - php composer.phar audit
 
-deploy:
-  stage: deploy
+deploy-development:
+  stage: deploy-staging
+  image: alpine:latest
+  only:
+    - assessments
+  script:
+    - echo "Deploy to staging"
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "assessments"'
+
+deploy-staging:
+  stage: deploy-staging
+  image: alpine:latest
+  only:
+    - main
+  script:
+    - echo "Deploy to staging"
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "assessments"'
+    - if: '$CI_COMMIT_REF_NAME == "main"'
+
+deploy-production:
+  stage: deploy-production
   image: alpine:latest
   only:
     - main
   script:
     - echo "Deploy to production"
-    # Add your deployment commands here
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "main"'
